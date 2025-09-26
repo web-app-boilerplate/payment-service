@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
     createPaymentService
     , getAllPaymentsService
@@ -56,7 +57,19 @@ const confirmPayment = async (req, res, next) => {
     try {
         const { id } = req.params;
 
+        // 1. Confirm the payment
         const payment = await confirmPaymentService(id);
+
+        // 2. Call Credit service to add balance
+        await axios.post(
+            `${process.env.CREDIT_SERVICE_URL}/credit/user/${payment.userId}/add`,
+            { amount: payment.amount },
+            {
+                headers: {
+                    Authorization: req.headers.authorization, // forward JWT for auth
+                },
+            }
+        );
 
         res.status(200).json({
             message: "Payment confirmed successfully",
