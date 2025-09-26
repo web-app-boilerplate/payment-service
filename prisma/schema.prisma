@@ -1,0 +1,27 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Payment {
+    id            Int           @id @default(autoincrement())
+    userId        Int // FK reference to User.id (logical, not enforced in Prisma)
+    amount        Float
+    currency      String        @default("EUR")
+    status        PaymentStatus @default(PENDING)
+    provider      String // "stripe", "paypal", "manual", etc.
+    transactionId String? // ID from Stripe or another provider
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+    PENDING
+    SUCCESS
+    FAILED
+    REFUNDED
+}
