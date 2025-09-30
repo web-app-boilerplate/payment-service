@@ -24,8 +24,9 @@ const webhookHandler = async (req, res) => {
             case "checkout.session.completed": {
                 const session = event.data.object;
                 const paymentId = session.metadata.paymentId; // we stored this when creating session
+                const bundle = session.metadata.bundle; // we stored this when creating session
                 logger.info(`Payment succeeded for paymentId=${paymentId}`);
-                await confirmPaymentService(paymentId);
+                await confirmPaymentService(paymentId, bundle);
                 break;
             }
 

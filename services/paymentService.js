@@ -9,14 +9,23 @@ const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Map bundles to Stripe Price IDs
 const BUNDLE_PRICE_MAP = {
-    "5_credits": process.env.STRIPE_PRICE_5_CREDITS,
-    "20_credits": process.env.STRIPE_PRICE_20_CREDITS,
-    "50_credits": process.env.STRIPE_PRICE_50_CREDITS,
+    "5_credits": {
+        priceId: process.env.STRIPE_PRICE_5_CREDITS,
+        credits: process.env.N_5_CREDITS,
+    },
+    "20_credits": {
+        priceId: process.env.STRIPE_PRICE_20_CREDITS,
+        credits: process.env.N_20_CREDITS,
+    },
+    "50_credits": {
+        priceId: process.env.STRIPE_PRICE_50_CREDITS,
+        credits: process.env.N_50_CREDITS,
+    },
 };
 
 
 const createCheckoutSessionService = async ({ userId, bundle }) => {
-    const priceId = BUNDLE_PRICE_MAP[bundle];
+    const { priceId } = BUNDLE_PRICE_MAP[bundle];
     if (!priceId) {
         throw new ApiError("Invalid bundle selected", 400);
     }
@@ -113,7 +122,8 @@ const getAllPaymentsService = async ({ page = 1, limit = 20, status = "ALL" }) =
     return { payments, total };
 };
 
-const confirmPaymentService = async (paymentId) => {
+const confirmPaymentService = async (paymentId, bundle) => {
+    const { credits } = BUNDLE_PRICE_MAP[bundle];
     const payment = await prisma.payment.findUnique({
         where: { id: Number(paymentId) },
     });
@@ -143,7 +153,7 @@ const confirmPaymentService = async (paymentId) => {
         const token = generateServiceToken();
         await axios.post(
             `${process.env.CREDIT_SERVICE_URL}/credit/user/${payment.userId}/add`,
-            { amount: payment.amount },
+            { amount: credits },
             {
                 headers: {
                     Authorization: `Bearer ${token}`
