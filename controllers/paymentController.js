@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {
     createPaymentService
+    , createCheckoutSessionService
     , getAllPaymentsService
     , confirmPaymentService
     , failPaymentService
@@ -10,19 +11,33 @@ import {
 } from "../services/paymentService.js";
 import { ApiError } from "../errors/ApiError.js";
 
+const createCheckoutSession = async (req, res, next) => {
+    try {
+        const { bundle } = req.body;
+        const userId = req.user.id;
+
+        if (!bundle) {
+            throw new ApiError("Bundle is required", 400);
+        }
+
+        const sessionUrl = await createCheckoutSessionService({ userId, bundle });
+
+        res.status(200).json({ url: sessionUrl });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 const createPayment = async (req, res, next) => {
     try {
         const { amount, currency, provider } = req.body;
         const userId = req.user.id;
 
-        const payment = await createPaymentService({
-            userId,
-            amount,
-            currency,
-            provider,
-        });
+        const { payment, clientSecret } = await createPaymentService({ userId, amount: parseFloat(amount), currency, provider });
 
-        res.status(201).json(payment);
+        // return DB payment and client_secret if stripe
+        res.status(201).json({ payment, clientSecret });
     } catch (err) {
         next(err);
     }
@@ -147,6 +162,7 @@ const getPaymentByUser = async (req, res, next) => {
 
 export {
     createPayment
+    , createCheckoutSession
     , getAllPayments
     , confirmPayment
     , failPayment

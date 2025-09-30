@@ -1,6 +1,7 @@
 import express from "express";
 import {
     createPayment
+    , createCheckoutSession
     , getAllPayments
     , confirmPayment
     , failPayment
@@ -8,10 +9,13 @@ import {
     , getPaymentById
     , getPaymentByUser
 } from "../controllers/paymentController.js";
-import verifyToken from "../middlewares/jwtMiddleware.js";
+import { verifyToken } from "../middlewares/jwtMiddleware.js";
 import authorizeRole from "../middlewares/roleMiddleware.js";
 
 const router = express.Router();
+
+// Start a checkou session 
+router.route('/checkout').post(verifyToken, authorizeRole(["admin", "user"]), createCheckoutSession);
 
 // Create a new payment intent        
 router.route('/').post(verifyToken, authorizeRole(["admin", "user"]), createPayment);
@@ -19,11 +23,14 @@ router.route('/').post(verifyToken, authorizeRole(["admin", "user"]), createPaym
 router.route('/').get(verifyToken, authorizeRole(["admin"]), getAllPayments);
 
 // Confirm a payment (set to SUCCESS) 
-router.route('/:id/confirm').post(verifyToken, authorizeRole(["admin"]), confirmPayment);
+//TODO REMOVE USER ROLE ONCE STRIPE ADDED
+router.route('/:id/confirm').post(verifyToken, authorizeRole(["admin", "user"]), confirmPayment);
 // Mark as failed                     
-router.route('/:id/fail').post(verifyToken, authorizeRole(["admin"]), failPayment);
+//TODO REMOVE USER ROLE ONCE STRIPE ADDED
+router.route('/:id/fail').post(verifyToken, authorizeRole(["admin", "user"]), failPayment);
 // Refund payment                     
-router.route('/:id/refund').post(verifyToken, authorizeRole(["admin"]), refundPayment);
+//TODO REMOVE USER ROLE ONCE STRIPE ADDED
+router.route('/:id/refund').post(verifyToken, authorizeRole(["admin", "user"]), refundPayment);
 // Get a specific payment             
 router.route('/:id').get(verifyToken, authorizeRole(["admin", "user"]), getPaymentById);
 
